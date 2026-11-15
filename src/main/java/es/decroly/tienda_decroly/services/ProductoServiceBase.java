@@ -1,29 +1,24 @@
 package es.decroly.tienda_decroly.services;
 
-import es.decroly.tienda_decroly.config.TiendaProperties;
 import es.decroly.tienda_decroly.domain.Producto;
-import es.decroly.tienda_decroly.dto.InfoTiendaDto;
-import es.decroly.tienda_decroly.exceptions.BadRequestException;
-import es.decroly.tienda_decroly.exceptions.NotFoundException;
+import es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException;
+import es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-
 @Slf4j
 public abstract class ProductoServiceBase implements ProductoService {
 
     private final List<Producto> productos;
     private final AtomicLong secuencia;
-    private final TiendaProperties tiendaProperties;
 
-    public ProductoServiceBase(List<Producto> pordInic, TiendaProperties tiendaProperties) {
-        this.productos = new ArrayList(pordInic);
-        this.tiendaProperties = tiendaProperties;
-        long maxId = 0;                       // mayor id de los iniciales
-        for (Producto p : pordInic) {
+    protected ProductoServiceBase(List<Producto> iniciales) {
+        this.productos = new ArrayList<>(iniciales);
+        long maxId = 0; // mayor id de los iniciales
+        for (Producto p : iniciales) {
             if (p.getId() > maxId) {
                 maxId = p.getId();
             }
@@ -43,9 +38,8 @@ public abstract class ProductoServiceBase implements ProductoService {
                 return p;
             }
         }
-        throw new NotFoundException(
+        throw new RecursoNoEncontradoException(
                 "No existe el producto " + id);
-
     }
 
     @Override
@@ -55,7 +49,6 @@ public abstract class ProductoServiceBase implements ProductoService {
         productos.add(producto);
         log.info("Producto creado: {}", producto.getId());
         return producto;
-
     }
 
     @Override
@@ -72,23 +65,14 @@ public abstract class ProductoServiceBase implements ProductoService {
     public void borrar(Long id) {
         Producto producto = buscarPorId(id);
         productos.remove(producto);
-
     }
+
     private void validar(Producto p) {
         if (p.getNombre() == null || p.getNombre().isBlank()) {
-            throw new BadRequestException("El nombre es obligatorio");
+            throw new PeticionIncorrectaException("Nombre obligatorio");
         }
         if (p.getPrecio() < 0) {
-            throw new BadRequestException("Precio no puede ser negativo");
+            throw new PeticionIncorrectaException("Precio negativo");
         }
-        if (p.getStock() < 0) {
-            throw new BadRequestException("Stock no puede ser negativo");
-        }
-    }
-    @Override
-    public InfoTiendaDto info() {
-        return new InfoTiendaDto(tiendaProperties.nombre(),
-                tiendaProperties.iva(),
-                tiendaProperties.envioGratisDesde());
     }
 }

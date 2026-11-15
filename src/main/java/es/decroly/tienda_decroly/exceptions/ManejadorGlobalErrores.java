@@ -6,21 +6,29 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-public class GlobalErrorHandler {
-    @ExceptionHandler(NotFoundException.class)
-    public ProblemDetail notFound(NotFoundException ex) {
+public class ManejadorGlobalErrores {
+
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ProblemDetail noEncontrado(RecursoNoEncontradoException ex) {
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND, ex.getMessage());
         problema.setTitle("Recurso no encontrado");
         return problema;
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ProblemDetail badRequest(BadRequestException ex) {
+    @ExceptionHandler(PeticionIncorrectaException.class)
+    public ProblemDetail incorrecta(PeticionIncorrectaException ex) {
         ProblemDetail problema = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST, ex.getMessage());
         problema.setTitle("Peticion incorrecta");
         return problema;
     }
 
+    @ExceptionHandler(ServicioExternoException.class)
+    public ProblemDetail servicioExterno(ServicioExternoException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problema.setTitle("Servicio externo no disponible");
+        return problema;
+    }
 }
