@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Schema(description = "Producto del catalogo de la tienda")
 @Getter
 @Setter
 @NoArgsConstructor
