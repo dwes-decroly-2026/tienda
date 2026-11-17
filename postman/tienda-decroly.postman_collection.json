@@ -1,0 +1,2390 @@
+{
+  "info": {
+    "_postman_id": "703d8583-76de-42b9-961c-e5542c436817",
+    "name": "tienda-decroly · UD3 API REST",
+    "description": "Colección de comprobación de tienda-decroly al terminar la UD3 (API REST con capa de servicios, configuración, APIs externas y documentación).\n\nAntes de ejecutar:\n1. Arranca la aplicación (con conexión a Internet: precios en divisas y origen api).\n2. Revisa las variables de la colección:\n   - baseUrl: http://localhost:8080 (si usas el entorno local, manda el del entorno)\n   - origen: el valor de tienda.productos.origen (memoria, json o api). Déjala vacía con jpa o cuando ya no exista la propiedad: con MySQL los datos se conservan entre arranques.\n   - iva: el valor de tienda.iva (21 por defecto).\n   - escenario: vacío para la ejecución normal (ver carpeta 8).\n3. Ejecuta la colección completa con Run collection, en orden. Las peticiones encadenan variables (idExistente, idCreado…).\n\nPara repetir la ejecución, reinicia la aplicación: los datos viven en memoria.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 · Primer proyecto: endpoints de prueba",
+      "description": "HolaMundoRestController y PrecioRestController. Respuestas de texto, variables de ruta y parámetros de consulta.",
+      "item": [
+        {
+          "name": "Saludo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/saludo",
+            "description": "Debe estar mapeado a /saludo (si en el experimento se cambió a /hola, hay que dejarlo como estaba)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve texto plano\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/plain\");",
+                  "});",
+                  "pm.test(\"El cuerpo no está vacío\", function () {",
+                  "    pm.expect(pm.response.text().trim().length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Saludo personalizado (variable de ruta)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hola/Ana"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Incluye el nombre de la ruta\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"Hola Ana\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Saludo sin nombre → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/hola"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404: sin la variable la ruta es otra\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar sin parámetro (defaultValue)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/buscar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Usa el valor por defecto \\\"todo\\\"\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"todo\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar con parámetro de consulta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/buscar?texto=teclado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Incluye el texto buscado\", function () {",
+                  "    pm.expect(pm.response.text()).to.include(\"teclado\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con IVA 21 (error de la división entera corregido)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/precio/100?iva=21"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function numeroTras(texto, etiqueta) {",
+                  "    const i = texto.indexOf(etiqueta);",
+                  "    if (i < 0) return NaN;",
+                  "    return parseFloat(texto.substring(i + etiqueta.length).trim());",
+                  "}",
+                  "",
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Con IVA: 121 EUR (si da 100, sigue la división entera)\", function () {",
+                  "    const total = numeroTras(pm.response.text(), \"Con IVA:\");",
+                  "    pm.expect(Math.abs(total - 121)).to.be.below(0.01);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con IVA por defecto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/precio/100"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function numeroTras(texto, etiqueta) {",
+                  "    const i = texto.indexOf(etiqueta);",
+                  "    if (i < 0) return NaN;",
+                  "    return parseFloat(texto.substring(i + etiqueta.length).trim());",
+                  "}",
+                  "",
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Sin iva usa 21 por defecto: 121 EUR\", function () {",
+                  "    const total = numeroTras(pm.response.text(), \"Con IVA:\");",
+                  "    pm.expect(Math.abs(total - 121)).to.be.below(0.01);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con IVA 10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/precio/100?iva=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function numeroTras(texto, etiqueta) {",
+                  "    const i = texto.indexOf(etiqueta);",
+                  "    if (i < 0) return NaN;",
+                  "    return parseFloat(texto.substring(i + etiqueta.length).trim());",
+                  "}",
+                  "",
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Con IVA: 110 EUR\", function () {",
+                  "    const total = numeroTras(pm.response.text(), \"Con IVA:\");",
+                  "    pm.expect(Math.abs(total - 110)).to.be.below(0.01);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con base no numérica → 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/precio/abc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400: Spring no puede convertir \\\"abc\\\" a double\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ruta inexistente → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/no-existe"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 · Productos: consultas",
+      "description": "GET de la colección y de un recurso. Funciona con cualquier origen de datos (memoria, json, api): toma el id de un producto real del listado.",
+      "item": [
+        {
+          "name": "Listar productos (datos iniciales)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos",
+            "description": "Ejecuta la colección justo después de arrancar: si ya se han creado o borrado productos, falla la comprobación de los datos iniciales. Pon en la variable 'origen' el valor de tienda.productos.origen (memoria, json o api)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function esProducto(p) {",
+                  "    pm.expect(p).to.have.property(\"id\");",
+                  "    pm.expect(p.id).to.be.a(\"number\");",
+                  "    pm.expect(p.nombre).to.be.a(\"string\");",
+                  "    pm.expect(p.precio).to.be.a(\"number\");",
+                  "    pm.expect(p.stock).to.be.a(\"number\");",
+                  "}",
+                  "",
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "const lista = pm.response.json();",
+                  "pm.test(\"Devuelve un array de productos con id, nombre, precio y stock\", function () {",
+                  "    pm.expect(lista).to.be.an(\"array\");",
+                  "    pm.expect(lista.length).to.be.above(0);",
+                  "    for (let i = 0; i < lista.length; i++) { esProducto(lista[i]); }",
+                  "});",
+                  "// Datos para las peticiones siguientes",
+                  "let maxId = 0;",
+                  "for (let i = 0; i < lista.length; i++) { if (lista[i].id > maxId) maxId = lista[i].id; }",
+                  "pm.collectionVariables.set(\"idExistente\", lista[0].id);",
+                  "pm.collectionVariables.set(\"precioExistente\", lista[0].precio);",
+                  "pm.collectionVariables.set(\"maxIdInicial\", maxId);",
+                  "",
+                  "const origen = pm.variables.get(\"origen\") || \"\";",
+                  "const esperado = {",
+                  "    memoria: { total: 3, nombres: [\"Teclado mecanico\", \"Raton inalambrico\", \"Monitor 24 pulgadas\"] },",
+                  "    json: { total: 4, nombres: [\"Portatil 15\", \"Auriculares BT\", \"Disco SSD 1 TB\", \"Hub USB-C\"] },",
+                  "    api: { total: 20, nombres: null }",
+                  "};",
+                  "if (esperado[origen]) {",
+                  "    pm.test(\"Datos iniciales del origen '\" + origen + \"' (reinicia la aplicación antes de ejecutar)\", function () {",
+                  "        pm.expect(lista.length).to.eql(esperado[origen].total);",
+                  "        const nombres = esperado[origen].nombres;",
+                  "        if (nombres !== null) {",
+                  "            for (let i = 0; i < nombres.length; i++) {",
+                  "                pm.expect(lista[i].id).to.eql(i + 1);",
+                  "                pm.expect(lista[i].nombre).to.eql(nombres[i]);",
+                  "            }",
+                  "        }",
+                  "    });",
+                  "} else {",
+                  "    console.log(\"Variable 'origen' vacía o desconocida: no se comprueban los datos iniciales\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idExistente}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "function esProducto(p) {",
+                  "    pm.expect(p).to.have.property(\"id\");",
+                  "    pm.expect(p.id).to.be.a(\"number\");",
+                  "    pm.expect(p.nombre).to.be.a(\"string\");",
+                  "    pm.expect(p.precio).to.be.a(\"number\");",
+                  "    pm.expect(p.stock).to.be.a(\"number\");",
+                  "}",
+                  "",
+                  "pm.test(\"Devuelve un único objeto con el id pedido\", function () {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p).to.be.an(\"object\");",
+                  "    esProducto(p);",
+                  "    pm.expect(p.id).to.eql(Number(pm.collectionVariables.get(\"idExistente\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar producto inexistente → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idInexistente}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"detail explica el error\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"No existe el producto \" + pm.variables.get(\"idInexistente\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar con id no numérico → 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/abc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400: \\\"abc\\\" no se puede convertir a Long\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedir XML (negociación de contenido) → 406",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/xml"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 406 Not Acceptable: la API no sabe producir XML\", function () {",
+                  "    pm.response.to.have.status(406);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · Productos: CRUD",
+      "description": "POST, PUT y DELETE con los códigos 201, 200, 204 y 404. Los productos se crean en la propia ejecución, así que no dependen del origen de datos.",
+      "item": [
+        {
+          "name": "Crear producto → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Alfombrilla XL\",\n    \"precio\": 12.50,\n    \"stock\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Cabecera Location apunta al nuevo producto\", function () {",
+                  "    const loc = pm.response.headers.get(\"Location\");",
+                  "    pm.expect(loc).to.be.a(\"string\");",
+                  "    pm.expect(loc).to.match(new RegExp(\"/api/productos/\" + pm.response.json().id + \"$\"));",
+                  "});",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Devuelve el producto con los datos enviados\", function () {",
+                  "    pm.expect(p.nombre).to.eql(\"Alfombrilla XL\");",
+                  "    pm.expect(p.precio).to.eql(12.5);",
+                  "    pm.expect(p.stock).to.eql(60);",
+                  "});",
+                  "pm.test(\"El servidor asigna un id nuevo, mayor que los iniciales\", function () {",
+                  "    pm.expect(p.id).to.be.a(\"number\");",
+                  "    pm.expect(p.id).to.be.above(Number(pm.collectionVariables.get(\"maxIdInicial\")));",
+                  "});",
+                  "pm.collectionVariables.set(\"idCreado\", p.id);",
+                  "// Location puede venir relativa o absoluta: nos quedamos con la ruta",
+                  "let loc = pm.response.headers.get(\"Location\") || \"\";",
+                  "const i = loc.indexOf(\"/api/\");",
+                  "pm.collectionVariables.set(\"locationPath\", i >= 0 ? loc.substring(i) : loc);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seguir la cabecera Location",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{locationPath}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Location lleva al producto recién creado\", function () {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.id).to.eql(Number(pm.collectionVariables.get(\"idCreado\")));",
+                  "    pm.expect(p.nombre).to.eql(\"Alfombrilla XL\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear el mismo producto otra vez (POST no es idempotente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Alfombrilla XL\",\n    \"precio\": 12.50,\n    \"stock\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Crea otro recurso con un id distinto y mayor\", function () {",
+                  "    const id = pm.response.json().id;",
+                  "    pm.expect(id).to.be.above(Number(pm.collectionVariables.get(\"idCreado\")));",
+                  "    pm.collectionVariables.set(\"idCreado2\", id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear ignorando el id del cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": 999,\n    \"nombre\": \"Cable HDMI\",\n    \"precio\": 7.99,\n    \"stock\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"El id lo decide el servidor, no el cuerpo\", function () {",
+                  "    pm.expect(pm.response.json().id).to.not.eql(999);",
+                  "    pm.collectionVariables.set(\"idCreado3\", pm.response.json().id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con precio 0 (permitido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Pegatina de regalo\",\n    \"precio\": 0,\n    \"stock\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201: precio 0 no es negativo\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Guarda el precio 0\", function () { pm.expect(pm.response.json().precio).to.eql(0); });",
+                  "pm.collectionVariables.set(\"idCreado4\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar tras crear",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"El listado incluye los productos creados\", function () {",
+                  "    const ids = [];",
+                  "    const lista = pm.response.json();",
+                  "    for (let i = 0; i < lista.length; i++) { ids.push(lista[i].id); }",
+                  "    pm.expect(ids).to.include(Number(pm.collectionVariables.get(\"idCreado\")));",
+                  "    pm.expect(ids).to.include(Number(pm.collectionVariables.get(\"idCreado2\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar producto → 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Alfombrilla XXL\",\n    \"precio\": 15.00,\n    \"stock\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Devuelve el producto modificado\", function () {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.id).to.eql(Number(pm.collectionVariables.get(\"idCreado\")));",
+                  "    pm.expect(p.nombre).to.eql(\"Alfombrilla XXL\");",
+                  "    pm.expect(p.precio).to.eql(15);",
+                  "    pm.expect(p.stock).to.eql(50);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comprobar la modificación con GET",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"Los cambios se han guardado\", function () {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.nombre).to.eql(\"Alfombrilla XXL\");",
+                  "    pm.expect(p.precio).to.eql(15);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar con otro id en el cuerpo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": 555,\n    \"nombre\": \"Alfombrilla XXL\",\n    \"precio\": 15.00,\n    \"stock\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"El id sale de la URL, no del cuerpo\", function () {",
+                  "    pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get(\"idCreado\")));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar producto inexistente → 404",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos/{{idInexistente}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"No existe\",\n    \"precio\": 1,\n    \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"detail explica el error\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"No existe el producto \" + pm.variables.get(\"idInexistente\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Borrar producto → 204",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado2}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 204 No Content\", function () { pm.response.to.have.status(204); });",
+                  "pm.test(\"Sin cuerpo\", function () { pm.expect(pm.response.text()).to.eql(\"\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Borrar otra vez el mismo → 404",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado2}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"detail explica el error\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"No existe el producto \" + pm.collectionVariables.get(\"idCreado2\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar el producto borrado → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado2}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Borrar producto inexistente → 404",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idInexistente}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · Validación y errores",
+      "description": "Reglas de negocio de la capa de servicios (nombre obligatorio, precio no negativo), manejador global con ProblemDetail y errores que genera el propio Spring.",
+      "item": [
+        {
+          "name": "Crear con nombre vacío → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"\",\n    \"precio\": 10,\n    \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail indica que el nombre es obligatorio\", function () {",
+                  "    const d = pm.response.json().detail.toLowerCase();",
+                  "    pm.expect(d).to.include(\"nombre\");",
+                  "    pm.expect(d).to.include(\"obligatorio\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con nombre solo de espacios → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"   \",\n    \"precio\": 10,\n    \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "isBlank() también rechaza los textos que solo tienen espacios."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail indica que el nombre es obligatorio\", function () {",
+                  "    const d = pm.response.json().detail.toLowerCase();",
+                  "    pm.expect(d).to.include(\"nombre\");",
+                  "    pm.expect(d).to.include(\"obligatorio\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear sin nombre → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"precio\": 10,\n    \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail indica que el nombre es obligatorio\", function () {",
+                  "    const d = pm.response.json().detail.toLowerCase();",
+                  "    pm.expect(d).to.include(\"nombre\");",
+                  "    pm.expect(d).to.include(\"obligatorio\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con precio negativo → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Producto erroneo\",\n    \"precio\": -5,\n    \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail indica que el precio es negativo\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.include(\"Precio negativo\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar con precio negativo → 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Alfombrilla XXL\",\n    \"precio\": -5,\n    \"stock\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail indica que el precio es negativo\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.include(\"Precio negativo\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar con nombre vacío → 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"\",\n    \"precio\": 15,\n    \"stock\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail indica que el nombre es obligatorio\", function () {",
+                  "    const d = pm.response.json().detail.toLowerCase();",
+                  "    pm.expect(d).to.include(\"nombre\");",
+                  "    pm.expect(d).to.include(\"obligatorio\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Una modificación rechazada no cambia nada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "pm.test(\"El producto conserva los datos anteriores\", function () {",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.nombre).to.eql(\"Alfombrilla XXL\");",
+                  "    pm.expect(p.precio).to.eql(15);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con JSON mal escrito → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Sin comillas de cierre,\n    \"precio\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400: Jackson no puede leer el cuerpo\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con cuerpo en texto plano → 415",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "nombre=Teclado"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 415 Unsupported Media Type\", function () {",
+                  "    pm.response.to.have.status(415);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 · Precio con IVA y en otras monedas",
+      "description": "PrecioService (IVA leído de tienda.iva), PrecioDivisaService y DivisaService (Frankfurter). Pon en la variable 'iva' el mismo valor que tienda.iva.",
+      "item": [
+        {
+          "name": "Crear producto para los precios",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Producto prueba precios\",\n    \"precio\": 100,\n    \"stock\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set(\"idPrecio\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio en EUR (moneda por defecto)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "function totalEsperado(base) {",
+                  "    const iva = Number(pm.variables.get(\"iva\"));",
+                  "    return Math.round(base * (1 + iva / 100) * 100) / 100;",
+                  "}",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"PrecioMonedaDto con idProducto, moneda, tipoCambio y total\", function () {",
+                  "    pm.expect(r.idProducto).to.eql(Number(pm.collectionVariables.get(\"idPrecio\")));",
+                  "    pm.expect(r.moneda).to.eql(\"EUR\");",
+                  "    pm.expect(r.tipoCambio).to.eql(1);",
+                  "    pm.expect(r.total).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"total = precio con IVA (\" + pm.variables.get(\"iva\") + \" %) redondeado a céntimos\", function () {",
+                  "    pm.expect(Math.abs(r.total - totalEsperado(100))).to.be.below(0.011);",
+                  "});",
+                  "pm.collectionVariables.set(\"totalEur\", r.total);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con moneda=EUR",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio?moneda=EUR"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "function totalEsperado(base) {",
+                  "    const iva = Number(pm.variables.get(\"iva\"));",
+                  "    return Math.round(base * (1 + iva / 100) * 100) / 100;",
+                  "}",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"PrecioMonedaDto con idProducto, moneda, tipoCambio y total\", function () {",
+                  "    pm.expect(r.idProducto).to.eql(Number(pm.collectionVariables.get(\"idPrecio\")));",
+                  "    pm.expect(r.moneda).to.eql(\"EUR\");",
+                  "    pm.expect(r.tipoCambio).to.eql(1);",
+                  "    pm.expect(r.total).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"total = precio con IVA (\" + pm.variables.get(\"iva\") + \" %) redondeado a céntimos\", function () {",
+                  "    pm.expect(Math.abs(r.total - totalEsperado(100))).to.be.below(0.011);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con moneda=eur (minúsculas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio?moneda=eur",
+            "description": "equalsIgnoreCase: la respuesta debe traer la moneda en mayúsculas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "function totalEsperado(base) {",
+                  "    const iva = Number(pm.variables.get(\"iva\"));",
+                  "    return Math.round(base * (1 + iva / 100) * 100) / 100;",
+                  "}",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"PrecioMonedaDto con idProducto, moneda, tipoCambio y total\", function () {",
+                  "    pm.expect(r.idProducto).to.eql(Number(pm.collectionVariables.get(\"idPrecio\")));",
+                  "    pm.expect(r.moneda).to.eql(\"EUR\");",
+                  "    pm.expect(r.tipoCambio).to.eql(1);",
+                  "    pm.expect(r.total).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"total = precio con IVA (\" + pm.variables.get(\"iva\") + \" %) redondeado a céntimos\", function () {",
+                  "    pm.expect(Math.abs(r.total - totalEsperado(100))).to.be.below(0.011);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio de un producto del catálogo inicial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idExistente}}/precio"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "function totalEsperado(base) {",
+                  "    const iva = Number(pm.variables.get(\"iva\"));",
+                  "    return Math.round(base * (1 + iva / 100) * 100) / 100;",
+                  "}",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"PrecioMonedaDto con idProducto, moneda, tipoCambio y total\", function () {",
+                  "    pm.expect(r.idProducto).to.eql(Number(pm.collectionVariables.get(\"idExistente\")));",
+                  "    pm.expect(r.moneda).to.eql(\"EUR\");",
+                  "    pm.expect(r.tipoCambio).to.eql(1);",
+                  "    pm.expect(r.total).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"total = precio con IVA (\" + pm.variables.get(\"iva\") + \" %) redondeado a céntimos\", function () {",
+                  "    pm.expect(Math.abs(r.total - totalEsperado(Number(pm.collectionVariables.get(\"precioExistente\"))))).to.be.below(0.011);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio en USD",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio?moneda=USD"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const esc = pm.variables.get(\"escenario\") || \"\";",
+                  "if (esc.indexOf(\"divisas\") === 0) {",
+                  "    console.log(\"Omitida: el escenario \" + esc + \" deja el servicio de divisas sin funcionar\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Moneda USD con un tipo de cambio positivo\", function () {",
+                  "    pm.expect(r.moneda).to.eql(\"USD\");",
+                  "    pm.expect(r.tipoCambio).to.be.a(\"number\");",
+                  "    pm.expect(r.tipoCambio).to.be.above(0);",
+                  "});",
+                  "pm.test(\"total = total en euros × tipo de cambio, redondeado\", function () {",
+                  "    const eur = Number(pm.collectionVariables.get(\"totalEur\"));",
+                  "    const esperado = Math.round(eur * r.tipoCambio * 100) / 100;",
+                  "    pm.expect(Math.abs(r.total - esperado)).to.be.below(0.011);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio en usd (minúsculas)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio?moneda=usd",
+            "description": "El servicio convierte el código a mayúsculas antes de llamar a Frankfurter."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const esc = pm.variables.get(\"escenario\") || \"\";",
+                  "if (esc.indexOf(\"divisas\") === 0) {",
+                  "    console.log(\"Omitida: el escenario \" + esc + \" deja el servicio de divisas sin funcionar\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Moneda USD con un tipo de cambio positivo\", function () {",
+                  "    pm.expect(r.moneda).to.eql(\"USD\");",
+                  "    pm.expect(r.tipoCambio).to.be.a(\"number\");",
+                  "    pm.expect(r.tipoCambio).to.be.above(0);",
+                  "});",
+                  "pm.test(\"total = total en euros × tipo de cambio, redondeado\", function () {",
+                  "    const eur = Number(pm.collectionVariables.get(\"totalEur\"));",
+                  "    const esperado = Math.round(eur * r.tipoCambio * 100) / 100;",
+                  "    pm.expect(Math.abs(r.total - esperado)).to.be.below(0.011);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio en GBP",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio?moneda=GBP"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const esc = pm.variables.get(\"escenario\") || \"\";",
+                  "if (esc.indexOf(\"divisas\") === 0) {",
+                  "    console.log(\"Omitida: el escenario \" + esc + \" deja el servicio de divisas sin funcionar\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Moneda GBP con un tipo de cambio positivo\", function () {",
+                  "    pm.expect(r.moneda).to.eql(\"GBP\");",
+                  "    pm.expect(r.tipoCambio).to.be.a(\"number\");",
+                  "    pm.expect(r.tipoCambio).to.be.above(0);",
+                  "});",
+                  "pm.test(\"total = total en euros × tipo de cambio, redondeado\", function () {",
+                  "    const eur = Number(pm.collectionVariables.get(\"totalEur\"));",
+                  "    const esperado = Math.round(eur * r.tipoCambio * 100) / 100;",
+                  "    pm.expect(Math.abs(r.total - esperado)).to.be.below(0.011);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio con moneda inexistente → 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}/precio?moneda=XYZ"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const esc = pm.variables.get(\"escenario\") || \"\";",
+                  "if (esc.indexOf(\"divisas\") === 0) {",
+                  "    console.log(\"Omitida: el escenario \" + esc + \" deja el servicio de divisas sin funcionar\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(400);",
+                  "    pm.expect(p.title).to.eql(\"Peticion incorrecta\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail explica el error\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Moneda no admitida: XYZ\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio de producto inexistente → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idInexistente}}/precio"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"detail explica el error\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"No existe el producto \" + pm.variables.get(\"idInexistente\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio en USD de producto inexistente → 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idInexistente}}/precio?moneda=USD",
+            "description": "Primero se busca el producto: el 404 llega antes de consultar la API de divisas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(404);",
+                  "    pm.expect(p.title).to.eql(\"Recurso no encontrado\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · APIs externas",
+      "description": "Exploración directa de DummyJSON y Frankfurter, antes de consumirlas desde la tienda. Necesita conexión a Internet.",
+      "item": [
+        {
+          "name": "DummyJSON: 3 productos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{catalogoUrl}}/products?limit=3"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Objeto con products, total, skip y limit\", function () {",
+                  "    pm.expect(r.products).to.be.an(\"array\");",
+                  "    pm.expect(r.products.length).to.eql(3);",
+                  "    pm.expect(r.total).to.be.a(\"number\");",
+                  "    pm.expect(r.skip).to.eql(0);",
+                  "    pm.expect(r.limit).to.eql(3);",
+                  "});",
+                  "pm.test(\"Cada producto trae id, title, price y stock (los campos que lee ProductoExternoDto)\", function () {",
+                  "    for (let i = 0; i < r.products.length; i++) {",
+                  "        const p = r.products[i];",
+                  "        pm.expect(p.id).to.be.a(\"number\");",
+                  "        pm.expect(p.title).to.be.a(\"string\");",
+                  "        pm.expect(p.price).to.be.a(\"number\");",
+                  "        pm.expect(p.stock).to.be.a(\"number\");",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Frankfurter: EUR → USD",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{divisasUrl}}/latest?base=EUR&symbols=USD"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Trae base, date y rates.USD (los campos de TipoCambioDto)\", function () {",
+                  "    pm.expect(r.base).to.eql(\"EUR\");",
+                  "    pm.expect(r.date).to.be.a(\"string\");",
+                  "    pm.expect(r.rates.USD).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Frankfurter: moneda inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{divisasUrl}}/latest?base=EUR&symbols=XYZ",
+            "description": "DivisaService cubre los dos casos: un 4xx (HttpClientErrorException) o una respuesta sin esa tasa (tipo null). En ambos la tienda responde 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde con un error 4xx o sin la tasa XYZ\", function () {",
+                  "    const c = pm.response.code;",
+                  "    if (c >= 400 && c < 500) {",
+                  "        pm.expect(c).to.be.within(400, 499);",
+                  "    } else {",
+                  "        pm.expect(c).to.eql(200);",
+                  "        const r = pm.response.json();",
+                  "        pm.expect(r.rates === undefined || r.rates.XYZ === undefined).to.eql(true);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 · Documentación OpenAPI",
+      "description": "springdoc-openapi: especificación en JSON y YAML, Swagger UI y anotaciones @Tag, @Operation, @ApiResponse, @Parameter y @Schema.",
+      "item": [
+        {
+          "name": "Especificación OpenAPI (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/v3/api-docs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 y JSON\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+                  "});",
+                  "",
+                  "const doc = pm.response.json();",
+                  "pm.test(\"Especificación OpenAPI 3\", function () {",
+                  "    pm.expect(doc.openapi).to.match(/^3\\./);",
+                  "});",
+                  "pm.test(\"Información general de OpenApiConfig\", function () {",
+                  "    pm.expect(doc.info.title).to.eql(\"API de la Tienda Decroly\");",
+                  "    pm.expect(doc.info.version).to.eql(\"1.0\");",
+                  "    pm.expect(doc.info.description).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"Rutas de productos con sus métodos\", function () {",
+                  "    pm.expect(doc.paths).to.have.property(\"/api/productos\");",
+                  "    pm.expect(doc.paths[\"/api/productos\"]).to.have.property(\"get\");",
+                  "    pm.expect(doc.paths[\"/api/productos\"]).to.have.property(\"post\");",
+                  "    const uno = doc.paths[\"/api/productos/{id}\"];",
+                  "    pm.expect(uno).to.have.property(\"get\");",
+                  "    pm.expect(uno).to.have.property(\"put\");",
+                  "    pm.expect(uno).to.have.property(\"delete\");",
+                  "    pm.expect(doc.paths).to.have.property(\"/api/productos/{id}/precio\");",
+                  "});",
+                  "function operacionesProductos() {",
+                  "    const ops = [];",
+                  "    const rutas = [\"/api/productos\", \"/api/productos/{id}\", \"/api/productos/{id}/precio\"];",
+                  "    const metodos = [\"get\", \"post\", \"put\", \"delete\"];",
+                  "    for (let i = 0; i < rutas.length; i++) {",
+                  "        const r = doc.paths[rutas[i]];",
+                  "        if (!r) continue;",
+                  "        for (let j = 0; j < metodos.length; j++) {",
+                  "            if (r[metodos[j]]) ops.push({ nombre: metodos[j].toUpperCase() + \" \" + rutas[i], op: r[metodos[j]] });",
+                  "        }",
+                  "    }",
+                  "    return ops;",
+                  "}",
+                  "pm.test(\"Todas las operaciones están en el grupo Productos (@Tag)\", function () {",
+                  "    const ops = operacionesProductos();",
+                  "    for (let i = 0; i < ops.length; i++) {",
+                  "        pm.expect(ops[i].op.tags, ops[i].nombre).to.include(\"Productos\");",
+                  "    }",
+                  "});",
+                  "pm.test(\"Todas las operaciones tienen summary (@Operation)\", function () {",
+                  "    const ops = operacionesProductos();",
+                  "    for (let i = 0; i < ops.length; i++) {",
+                  "        pm.expect(ops[i].op.summary, ops[i].nombre).to.be.a(\"string\");",
+                  "    }",
+                  "});",
+                  "pm.test(\"GET /api/productos/{id} documenta 200 y 404\", function () {",
+                  "    const resp = doc.paths[\"/api/productos/{id}\"].get.responses;",
+                  "    pm.expect(resp).to.have.property(\"200\");",
+                  "    pm.expect(resp).to.have.property(\"404\");",
+                  "});",
+                  "pm.test(\"El precio admite el parámetro de consulta moneda\", function () {",
+                  "    const params = doc.paths[\"/api/productos/{id}/precio\"].get.parameters;",
+                  "    let encontrado = false;",
+                  "    for (let i = 0; i < params.length; i++) {",
+                  "        if (params[i].name === \"moneda\" && params[i].in === \"query\") encontrado = true;",
+                  "    }",
+                  "    pm.expect(encontrado).to.eql(true);",
+                  "});",
+                  "pm.test(\"Schema Producto documentado (@Schema) con id de solo lectura\", function () {",
+                  "    const s = doc.components.schemas.Producto;",
+                  "    pm.expect(s).to.be.an(\"object\");",
+                  "    pm.expect(s.description).to.be.a(\"string\");",
+                  "    pm.expect(s.properties.id.readOnly).to.eql(true);",
+                  "    pm.expect(s.properties.nombre.example).to.eql(\"Teclado mecanico\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Especificación OpenAPI (YAML)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/v3/api-docs.yaml"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Es YAML con la cabecera openapi\", function () {",
+                  "    pm.expect(pm.response.text()).to.match(/^openapi: /m);",
+                  "    pm.expect(pm.response.text()).to.include(\"API de la Tienda Decroly\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/swagger-ui.html"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200 (tras la redirección a /swagger-ui/index.html)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Es la página HTML de Swagger UI\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "    pm.expect(pm.response.text().toLowerCase()).to.include(\"swagger\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8 · Escenarios con otra configuración",
+      "description": "Peticiones que solo tienen sentido con una configuración concreta. Se omiten solas salvo que la variable 'escenario' tenga el valor indicado en cada una.\n\nCómo usarlas:\n1. Cambia la propiedad en application.properties y reinicia la aplicación.\n2. Pon el valor en la variable 'escenario' de la colección.\n3. Ejecuta la colección completa (o solo esta carpeta y la carpeta 2, que obtiene un id válido).\n4. Al terminar, deja la propiedad como estaba y vacía 'escenario'.\n\n- divisas-caidas → apis.divisas-url=http://localhost:9999\n- divisas-sin-respuesta → apis.divisas-url=http://10.255.255.1 (pon en 'timeoutSegundos' el valor de apis.timeout-segundos)\n- problemdetails → spring.mvc.problemdetails.enabled=true",
+      "item": [
+        {
+          "name": "Divisas caídas: precio en USD → 503",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idExistente}}/precio?moneda=USD"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ((pm.variables.get(\"escenario\") || \"\") !== \"divisas-caidas\") {",
+                  "    console.log(\"Omitida: solo se ejecuta con escenario = divisas-caidas\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 503\", function () {",
+                  "    pm.response.to.have.status(503);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(503);",
+                  "    pm.expect(p.title).to.eql(\"Servicio externo no disponible\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "pm.test(\"detail explica el error\", function () {",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"El servicio de divisas no esta disponible\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Divisas caídas: el precio en EUR sigue funcionando",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idExistente}}/precio"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ((pm.variables.get(\"escenario\") || \"\") !== \"divisas-caidas\") {",
+                  "    console.log(\"Omitida: solo se ejecuta con escenario = divisas-caidas\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 200: en euros no se consulta la API de divisas\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().moneda).to.eql(\"EUR\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Divisas sin respuesta: 503 al agotar el tiempo de espera",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idExistente}}/precio?moneda=USD"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ((pm.variables.get(\"escenario\") || \"\") !== \"divisas-sin-respuesta\") {",
+                  "    console.log(\"Omitida: solo se ejecuta con escenario = divisas-sin-respuesta\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 503\", function () {",
+                  "    pm.response.to.have.status(503);",
+                  "});",
+                  "pm.test(\"Cuerpo ProblemDetail (application/problem+json)\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const p = pm.response.json();",
+                  "    pm.expect(p.status).to.eql(503);",
+                  "    pm.expect(p.title).to.eql(\"Servicio externo no disponible\");",
+                  "    pm.expect(p.detail).to.be.a(\"string\");",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Tarda aproximadamente apis.timeout-segundos\", function () {",
+                  "    const ms = Number(pm.variables.get(\"timeoutSegundos\")) * 1000;",
+                  "    pm.expect(pm.response.responseTime).to.be.at.least(ms - 500);",
+                  "    pm.expect(pm.response.responseTime).to.be.below(ms * 2 + 2000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ProblemDetail de Spring: JSON mal escrito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Sin comillas de cierre,\n    \"precio\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ((pm.variables.get(\"escenario\") || \"\") !== \"problemdetails\") {",
+                  "    console.log(\"Omitida: solo se ejecuta con escenario = problemdetails\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 400 en formato ProblemDetail\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json().status).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ProblemDetail de Spring: cuerpo no JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": "{{baseUrl}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "nombre=Teclado"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ((pm.variables.get(\"escenario\") || \"\") !== \"problemdetails\") {",
+                  "    console.log(\"Omitida: solo se ejecuta con escenario = problemdetails\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 415 en formato ProblemDetail\", function () {",
+                  "    pm.response.to.have.status(415);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(pm.response.json().status).to.eql(415);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9 · Limpieza",
+      "description": "Borra los productos creados durante la ejecución. Aun así, para repetir la comprobación de los datos iniciales hay que reiniciar la aplicación, porque los ids no se reutilizan.",
+      "item": [
+        {
+          "name": "Borrar idCreado",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Borrar idCreado3",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado3}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Borrar idCreado4",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idCreado4}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Borrar idPrecio",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/productos/{{idPrecio}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "origen",
+      "value": "memoria"
+    },
+    {
+      "key": "iva",
+      "value": "21"
+    },
+    {
+      "key": "escenario",
+      "value": ""
+    },
+    {
+      "key": "timeoutSegundos",
+      "value": "3"
+    },
+    {
+      "key": "idInexistente",
+      "value": "99999"
+    },
+    {
+      "key": "catalogoUrl",
+      "value": "https://dummyjson.com"
+    },
+    {
+      "key": "divisasUrl",
+      "value": "https://api.frankfurter.dev/v1"
+    },
+    {
+      "key": "idExistente",
+      "value": ""
+    },
+    {
+      "key": "precioExistente",
+      "value": ""
+    },
+    {
+      "key": "maxIdInicial",
+      "value": ""
+    },
+    {
+      "key": "idCreado",
+      "value": ""
+    },
+    {
+      "key": "idCreado2",
+      "value": ""
+    },
+    {
+      "key": "idCreado3",
+      "value": ""
+    },
+    {
+      "key": "idCreado4",
+      "value": ""
+    },
+    {
+      "key": "locationPath",
+      "value": ""
+    },
+    {
+      "key": "idPrecio",
+      "value": ""
+    },
+    {
+      "key": "totalEur",
+      "value": ""
+    }
+  ]
+}
