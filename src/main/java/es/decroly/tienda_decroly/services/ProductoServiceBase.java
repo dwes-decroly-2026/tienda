@@ -57,7 +57,7 @@ public abstract class ProductoServiceBase implements ProductoService {
         Producto producto = buscarPorId(id);
         producto.setNombre(datos.getNombre());
         producto.setPrecio(datos.getPrecio());
-        producto.setStock(datos.getStock());
+        producto.setExistencias(datos.getExistencias());
         return producto;
     }
 
@@ -71,7 +71,7 @@ public abstract class ProductoServiceBase implements ProductoService {
         if (p.getNombre() == null || p.getNombre().isBlank()) {
             throw new PeticionIncorrectaException("Nombre obligatorio");
         }
-        if (p.getPrecio() < 0) {
+        if (p.getPrecio() == null || p.getPrecio().signum() < 0) {
             throw new PeticionIncorrectaException("Precio negativo");
         }
     }

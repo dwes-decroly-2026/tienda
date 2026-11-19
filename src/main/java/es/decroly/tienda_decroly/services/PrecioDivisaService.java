@@ -5,6 +5,9 @@ import es.decroly.tienda_decroly.dto.PrecioMonedaDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 @Service
 @RequiredArgsConstructor
 public class PrecioDivisaService {
@@ -20,7 +23,7 @@ public class PrecioDivisaService {
         }
         String codigo = moneda.toUpperCase();
         double tipo = divisaService.tipoDeCambio(codigo);
-        double total = Math.round(enEuros.total() * tipo * 100) / 100.0;
+        BigDecimal total = enEuros.total().multiply(BigDecimal.valueOf(tipo)).setScale(2, RoundingMode.HALF_UP);
         return new PrecioMonedaDto(idProducto, codigo, tipo, total);
     }
 }

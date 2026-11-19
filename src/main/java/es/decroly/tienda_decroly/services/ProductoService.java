@@ -2,6 +2,7 @@ package es.decroly.tienda_decroly.services;
 
 import es.decroly.tienda_decroly.domain.Producto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -53,4 +54,5 @@ public interface ProductoService {
      * @throws es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException si no existe
      */
     void borrar(Long id);
+
 }

@@ -143,7 +143,7 @@ Las pruebas no necesitan Internet.
 
 ### Colección de Postman
 
-En la carpeta `postman/` están la colección `tienda-decroly-UD3.postman_collection.json` y el entorno `local.postman_environment.json`.
+En la carpeta `postman/` están la colección `tienda-decroly.postman_collection.json` y el entorno `local.postman_environment.json`.
 
 1. En Postman, pulsa *Import* y selecciona los dos ficheros.
 2. Elige el entorno `local` y revisa las variables de la colección:
