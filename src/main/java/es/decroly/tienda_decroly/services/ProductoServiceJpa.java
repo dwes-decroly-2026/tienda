@@ -54,10 +54,15 @@ public class ProductoServiceJpa implements ProductoService {
 
     @Override
     public void borrar(Long id) {
-        if (!productoRepository.existsById(id)){
+        if (!productoRepository.existsById(id)) {
             throw new RecursoNoEncontradoException("No existe el producto con id " + id);
-
         }
+        //Otra forma alternativa de buscar si el producto existe para eliminarlo
+        /*Producto producto = buscarPorId(id);
+        if (producto==null){
+            throw new RecursoNoEncontradoException("No existe el producto con id " + id);
+        }}*/
+
         productoRepository.deleteById(id);
     }
     private void validar(Producto p) {
