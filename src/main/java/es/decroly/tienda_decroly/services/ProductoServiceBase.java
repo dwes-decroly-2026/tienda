@@ -57,7 +57,7 @@ public abstract class ProductoServiceBase implements ProductoService {
         Producto producto = buscarPorId(id);
         producto.setNombre(datos.getNombre());
         producto.setPrecio(datos.getPrecio());
-        producto.setExistencias(datos.getExistencias());
+        producto.setStock(datos.getStock());
         return producto;
     }
 
