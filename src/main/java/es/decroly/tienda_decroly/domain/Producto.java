@@ -35,6 +35,6 @@ public class Producto {
 
     @Schema(description = "Unidades disponibles", example = "15")
     @Column(nullable = false)
-    private int existencias ;
+    private int stock ;
 
 }

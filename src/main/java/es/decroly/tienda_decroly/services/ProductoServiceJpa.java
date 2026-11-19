@@ -48,7 +48,7 @@ public class ProductoServiceJpa implements ProductoService {
 
         producto.setNombre( datos.getNombre());
         producto.setPrecio(datos.getPrecio());
-        producto.setExistencias(datos.getExistencias());
+        producto.setStock(datos.getStock());
         return productoRepository.save(producto);
     }
 
