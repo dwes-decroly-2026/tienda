@@ -5,6 +5,7 @@ import es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException;
 import es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,5 +75,14 @@ public abstract class ProductoServiceBase implements ProductoService {
         if (p.getPrecio() == null || p.getPrecio().signum() < 0) {
             throw new PeticionIncorrectaException("Precio negativo");
         }
+    }
+    @Override
+    public List<Producto> buscar(String texto, BigDecimal precioMaximo) {
+        return List.of();
+    }
+
+    @Override
+    public List<Producto> listarConStockBajo(int limite) {
+        return List.of();
     }
 }

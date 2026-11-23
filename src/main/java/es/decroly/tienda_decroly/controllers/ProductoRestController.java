@@ -15,6 +15,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
 
@@ -119,5 +120,22 @@ public class ProductoRestController {
             @RequestParam(defaultValue = "EUR") String moneda) {
         return precioDivisaService.calcular(id, moneda);
     }
+
+    // GET /api/productos/buscar?texto=raton
+    // GET /api/productos/buscar?precioMaximo=20
+    @GetMapping("/buscar")
+    public List<Producto> buscar(
+            @RequestParam(required = false) String texto,
+            @RequestParam(required = false) BigDecimal precioMaximo) {
+        return productoService.buscar(texto, precioMaximo);
+    }
+
+    // GET /api/productos/stock-bajo?limite=10
+    @GetMapping("/stock-bajo")
+    public List<Producto> stockBajo(
+            @RequestParam(defaultValue = "5") int limite) {
+        return productoService.listarConStockBajo(limite);
+    }
+
 
 }

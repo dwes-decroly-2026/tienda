@@ -55,4 +55,8 @@ public interface ProductoService {
      */
     void borrar(Long id);
 
+    List<Producto> buscar(String texto, BigDecimal precioMaximo);
+
+    List<Producto> listarConStockBajo(int limite);
+
 }
