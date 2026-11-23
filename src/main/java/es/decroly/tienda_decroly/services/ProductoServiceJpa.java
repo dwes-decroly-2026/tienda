@@ -23,8 +23,7 @@ public class ProductoServiceJpa implements ProductoService {
 
     @Override
     public List<Producto> listar() {
-        //return productoRepository.findAll();
-        return productoRepository.findByNombreContainingIgnoreCase("xL");
+        return productoRepository.findAll();
     }
 
     @Override
