@@ -1,12 +1,16 @@
 package es.decroly.tienda_decroly.services;
 
 import es.decroly.tienda_decroly.domain.Producto;
+import es.decroly.tienda_decroly.dto.PaginaProductosDto;
 import es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException;
 import es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException;
 import es.decroly.tienda_decroly.repositories.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -84,6 +88,40 @@ public class ProductoServiceJpa implements ProductoService {
             throw new PeticionIncorrectaException("Limite negativo");
         }
         return productoRepository.findByStockLessThanOrderByStockAsc(limite);
+    }
+
+    @Override
+    public List<Producto> listarMasCarosQueLaMedia() {
+       return productoRepository.buscarMasCarosQueLaMedia();
+
+    }
+
+    @Override
+    public List<Producto> buscarEntrePrecios(BigDecimal min, BigDecimal max) {
+        if (min.compareTo(max) > 0) {
+            throw new PeticionIncorrectaException(
+                    "El precio minimo no puede ser mayor que el maximo");
+        }
+        return productoRepository.buscarEntrePrecios(min, max);
+    }
+
+    @Override
+    public PaginaProductosDto listarPagina(int pagina, int tamano, String orden) {
+        if (pagina < 0 || tamano < 1 || tamano > 50) {
+            throw new PeticionIncorrectaException(
+                    "Pagina o tamano no validos (tamano entre 1 y 50)");
+        }
+        if (!orden.equals("nombre") && !orden.equals("precio")
+                && !orden.equals("stock")) {
+            throw new PeticionIncorrectaException(
+                    "Solo se puede ordenar por nombre, precio o stock");
+        }
+        PageRequest peticion = PageRequest.of(pagina, tamano, Sort.by(orden));
+        Page<Producto> resultado = productoRepository.findAll(peticion);
+        return new PaginaProductosDto(resultado.getContent(),
+                resultado.getNumber(), resultado.getSize(),
+                resultado.getTotalElements(), resultado.getTotalPages());
+
     }
 
 

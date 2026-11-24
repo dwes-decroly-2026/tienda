@@ -1,6 +1,7 @@
 package es.decroly.tienda_decroly.services;
 
 import es.decroly.tienda_decroly.domain.Producto;
+import es.decroly.tienda_decroly.dto.PaginaProductosDto;
 import es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException;
 import es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +77,8 @@ public abstract class ProductoServiceBase implements ProductoService {
             throw new PeticionIncorrectaException("Precio negativo");
         }
     }
+
+    //Nuevos metodos añadidos para jpa pero ya no mantenemos memoria ni json, están sin implementar
     @Override
     public List<Producto> buscar(String texto, BigDecimal precioMaximo) {
         return List.of();
@@ -84,5 +87,18 @@ public abstract class ProductoServiceBase implements ProductoService {
     @Override
     public List<Producto> listarConStockBajo(int limite) {
         return List.of();
+    }
+    @Override
+    public List<Producto> listarMasCarosQueLaMedia() {
+        return List.of();
+    }
+
+    @Override
+    public List<Producto> buscarEntrePrecios(BigDecimal min, BigDecimal max) {
+        return List.of();
+    }
+    @Override
+    public PaginaProductosDto listarPagina(int pagina, int tamano, String orden) {
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package es.decroly.tienda_decroly.controllers;
 
 import es.decroly.tienda_decroly.domain.Producto;
+import es.decroly.tienda_decroly.dto.PaginaProductosDto;
 import es.decroly.tienda_decroly.dto.PrecioMonedaDto;
 import es.decroly.tienda_decroly.services.PrecioDivisaService;
 import es.decroly.tienda_decroly.services.ProductoService;
@@ -137,5 +138,26 @@ public class ProductoRestController {
         return productoService.listarConStockBajo(limite);
     }
 
+    // GET /api/productos/mas-caros
+    @GetMapping("/mas-caros")
+    public List<Producto> productosMasCaros() {
+        return productoService.listarMasCarosQueLaMedia();
+    }
+
+    // GET /api/productos/sentre-precios?min=10&max=50
+    @GetMapping("/entre-precios")
+    public List<Producto> productosEntrePrecios(
+            @RequestParam BigDecimal min, @RequestParam BigDecimal max) {
+        return productoService.buscarEntrePrecios(min, max);
+    }
+
+    // GET /api/productos/paginado?pagina=0&tamano=5&orden=precio
+    @GetMapping("/paginado")
+    public PaginaProductosDto paginado(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "5") int tamano,
+            @RequestParam(defaultValue = "nombre") String orden) {
+        return productoService.listarPagina(pagina, tamano, orden);
+    }
 
 }

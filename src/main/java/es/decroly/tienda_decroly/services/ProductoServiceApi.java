@@ -2,6 +2,7 @@ package es.decroly.tienda_decroly.services;
 
 import es.decroly.tienda_decroly.config.ApisProperties;
 import es.decroly.tienda_decroly.domain.Producto;
+import es.decroly.tienda_decroly.dto.PaginaProductosDto;
 import es.decroly.tienda_decroly.dto.ProductoExternoDto;
 import es.decroly.tienda_decroly.dto.RespuestaProductosDto;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

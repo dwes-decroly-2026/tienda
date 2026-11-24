@@ -1,6 +1,7 @@
 package es.decroly.tienda_decroly.services;
 
 import es.decroly.tienda_decroly.domain.Producto;
+import es.decroly.tienda_decroly.dto.PaginaProductosDto;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,7 +33,7 @@ public interface ProductoService {
      * @param producto datos del producto; su id se ignora
      * @return el producto creado, con su id
      * @throws es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException si el nombre
-     *         esta vacio o el precio es negativo
+     *                                                                          esta vacio o el precio es negativo
      */
     Producto crear(Producto producto);
 
@@ -42,7 +43,7 @@ public interface ProductoService {
      * @param id    identificador del producto que se modifica
      * @param datos datos nuevos; su id se ignora
      * @return el producto modificado
-     * @throws es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException si los datos no son validos
+     * @throws es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException  si los datos no son validos
      * @throws es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException si no existe
      */
     Producto modificar(Long id, Producto datos);
@@ -59,4 +60,9 @@ public interface ProductoService {
 
     List<Producto> listarConStockBajo(int limite);
 
+    List<Producto> listarMasCarosQueLaMedia();
+
+    List<Producto> buscarEntrePrecios(BigDecimal min, BigDecimal max);
+
+    PaginaProductosDto listarPagina(int pagina, int tamano, String orden);
 }
