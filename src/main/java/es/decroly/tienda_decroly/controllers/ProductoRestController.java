@@ -3,6 +3,7 @@ package es.decroly.tienda_decroly.controllers;
 import es.decroly.tienda_decroly.domain.Producto;
 import es.decroly.tienda_decroly.dto.PaginaProductosDto;
 import es.decroly.tienda_decroly.dto.PrecioMonedaDto;
+import es.decroly.tienda_decroly.dto.ProductoPeticionDto;
 import es.decroly.tienda_decroly.services.PrecioDivisaService;
 import es.decroly.tienda_decroly.services.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +61,7 @@ public class ProductoRestController {
             content = @Content(
                     schema = @Schema(implementation = ProblemDetail.class)))
     @PostMapping
-    public ResponseEntity<Producto> crear(@RequestBody Producto producto) {
+    public ResponseEntity<Producto> crear(@Valid @RequestBody ProductoPeticionDto producto) {
         Producto creado = productoService.crear(producto);
         URI direccion = URI.create("/api/productos/" + creado.getId());
         return ResponseEntity.created(direccion).body(creado);
@@ -80,7 +82,7 @@ public class ProductoRestController {
     public Producto modificar(
             @Parameter(description = "Id del producto", example = "1")
             @PathVariable Long id,
-            @RequestBody Producto datos) {
+            @Valid @RequestBody ProductoPeticionDto datos) {
         return productoService.modificar(id, datos);
     }
 

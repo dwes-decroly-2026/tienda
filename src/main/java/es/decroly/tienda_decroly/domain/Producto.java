@@ -36,4 +36,7 @@ public class Producto {
     @Column(nullable = false)
     private int stock ;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name="familia_id")
+    private Familia familia;
 }

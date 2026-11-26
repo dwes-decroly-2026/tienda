@@ -1,10 +1,17 @@
 package es.decroly.tienda_decroly.exceptions;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class ManejadorGlobalErrores {
 
@@ -31,4 +38,19 @@ public class ManejadorGlobalErrores {
         problema.setTitle("Servicio externo no disponible");
         return problema;
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail datosNoValidos(MethodArgumentNotValidException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Hay datos no validos en la peticion");
+        problema.setTitle("Datos no validos");
+
+        Map<String, String> errores = new LinkedHashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errores.put(error.getField(), error.getDefaultMessage());
+        }
+        problema.setProperty("errores", errores);
+        return problema;
+    }
+
 }

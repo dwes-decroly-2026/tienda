@@ -24,5 +24,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     List<Producto> buscarEntrePrecios(@Param("min") BigDecimal min,
                                       @Param("max") BigDecimal max);
 
+    List<Producto> findByFamiliaId(Long familiaId);
 }
 

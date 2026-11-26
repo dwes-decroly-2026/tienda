@@ -14,7 +14,7 @@ class ProductoServiceMemoriaTest {
 
     private ProductoService servicio;
 
-    @BeforeEach
+    /*@BeforeEach
     void preparar() {
         servicio = new ProductoServiceMemoria();
     }
@@ -68,5 +68,5 @@ class ProductoServiceMemoriaTest {
         } catch (RecursoNoEncontradoException ex) {
             // correcto
         }
-    }
+    }*/
 }

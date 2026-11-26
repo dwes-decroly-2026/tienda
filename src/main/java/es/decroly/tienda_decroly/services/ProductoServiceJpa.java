@@ -1,9 +1,12 @@
 package es.decroly.tienda_decroly.services;
 
+import es.decroly.tienda_decroly.domain.Familia;
 import es.decroly.tienda_decroly.domain.Producto;
 import es.decroly.tienda_decroly.dto.PaginaProductosDto;
+import es.decroly.tienda_decroly.dto.ProductoPeticionDto;
 import es.decroly.tienda_decroly.exceptions.PeticionIncorrectaException;
 import es.decroly.tienda_decroly.exceptions.RecursoNoEncontradoException;
+import es.decroly.tienda_decroly.repositories.FamiliaRepository;
 import es.decroly.tienda_decroly.repositories.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductoServiceJpa implements ProductoService {
     private final ProductoRepository productoRepository;
-
+    private final FamiliaRepository familiaRepository;
     @Override
     public List<Producto> listar() {
         return productoRepository.findAll();
@@ -40,6 +43,21 @@ public class ProductoServiceJpa implements ProductoService {
     }
 
     @Override
+    public Producto crear(ProductoPeticionDto productoDto) {
+        Producto producto = new Producto();        // nuevo: id null
+        copiarDatos(productoDto, producto);
+        return productoRepository.save(producto);
+
+    }
+
+    @Override
+    public Producto modificar(Long id, ProductoPeticionDto datos) {
+        Producto producto = buscarPorId(id);       // 404 si no existe
+        copiarDatos(datos, producto);
+        return productoRepository.save(producto);
+    }
+
+    /*@Override
     public Producto crear(Producto producto) {
         validar(producto);
         producto.setId(null);
@@ -55,7 +73,7 @@ public class ProductoServiceJpa implements ProductoService {
         producto.setPrecio(datos.getPrecio());
         producto.setStock(datos.getStock());
         return productoRepository.save(producto);
-    }
+    }*/
 
     @Override
     public void borrar(Long id) {
@@ -124,17 +142,24 @@ public class ProductoServiceJpa implements ProductoService {
 
     }
 
-
-    private void validar(Producto p) {
-        if (p.getNombre() == null || p.getNombre().isBlank()) {
-            throw new PeticionIncorrectaException("Nombre obligatorio");
-        }
-        if (p.getPrecio() == null) {
-            throw new PeticionIncorrectaException("Precio obligatorio");
-        }
-        if (p.getPrecio().signum() < 0) {
-            throw new PeticionIncorrectaException("Precio negativo");
-        }
+    @Override
+    public List<Producto> listarPorFamilia(Long familiaId) {
+        return productoRepository.findByFamiliaId(familiaId);
     }
+
+
+    private void copiarDatos(ProductoPeticionDto peticion, Producto producto) {
+        Familia familia =
+                familiaRepository.findById(peticion.familiaId()).orElse(null);
+        if (familia == null) {
+            throw new PeticionIncorrectaException(
+                    "No existe la familia " + peticion.familiaId());
+        }
+        producto.setNombre(peticion.nombre());
+        producto.setPrecio(peticion.precio());
+        producto.setStock(peticion.stock());
+        producto.setFamilia(familia);
+    }
+
 
 }
