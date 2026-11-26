@@ -60,6 +60,7 @@ public interface ProductoService {
 
     List<Producto> listarConStockBajo(int limite);
 
+
     List<Producto> listarMasCarosQueLaMedia();
 
     List<Producto> buscarEntrePrecios(BigDecimal min, BigDecimal max);

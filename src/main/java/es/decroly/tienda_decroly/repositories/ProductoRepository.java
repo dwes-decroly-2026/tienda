@@ -9,12 +9,15 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
+
     List<Producto> findByNombreContainingIgnoreCase(String texto);
     List<Producto> findByPrecioLessThanEqual(BigDecimal precioMaximo);
     List<Producto> findByStockLessThanOrderByStockAsc(int limite);
+
     @Query("SELECT p FROM Producto p WHERE p.precio > "
             + "(SELECT AVG(p2.precio) FROM Producto p2) ORDER BY p.precio DESC")
     List<Producto> buscarMasCarosQueLaMedia();
+
 
     @Query("SELECT p FROM Producto p "
             + "WHERE p.precio BETWEEN :min AND :max ORDER BY p.precio")

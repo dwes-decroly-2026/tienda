@@ -1,6 +1,8 @@
 package es.decroly.tienda_decroly.config;
 
+import es.decroly.tienda_decroly.domain.Familia;
 import es.decroly.tienda_decroly.domain.Producto;
+import es.decroly.tienda_decroly.repositories.FamiliaRepository;
 import es.decroly.tienda_decroly.repositories.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +18,16 @@ import java.util.List;
 public class DatosIniciales implements CommandLineRunner {
 
     private final ProductoRepository productoRepository;
-
+    private final FamiliaRepository familiaRepository;
     @Override
     public void run(String... args) {
+        if (familiaRepository.count() == 0) {
+            familiaRepository.saveAll(List.of(
+                    new Familia(null, "Perifericos", "Teclados, ratones..."),
+                    new Familia(null, "Monitores", "Pantallas"),
+                    new Familia(null, "Almacenamiento", "Discos y USB")));
+            log.info("Cargadas 3 familias en MySQL");
+        }
         if (productoRepository.count() > 0) {
             log.info("La base de datos ya tiene productos");
             return;

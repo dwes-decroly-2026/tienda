@@ -22,7 +22,6 @@ public class Producto {
             example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private Long id;
 
     @Schema(description = "Nombre comercial", example = "Teclado mecanico")
